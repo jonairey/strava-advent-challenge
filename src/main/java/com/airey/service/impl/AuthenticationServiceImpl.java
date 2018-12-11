@@ -4,6 +4,7 @@ import com.airey.domain.authorization.Authorization;
 import com.airey.service.AuthenticationService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -30,10 +31,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public Authorization authenticate(final String id) {
         try (final CloseableHttpClient client = HttpClients.custom().build()) {
-            final HttpPost post = new HttpPost(
-                    format("https://www.strava.com/oauth/token?client_id=%s&client_secret=%s&code=%s&grant_type=%s",
-                            stravaClientId, stravaClientSecret, id, STRAVA_GRANT_TYPE));
-            final String responseBody = EntityUtils.toString(client.execute(post).getEntity());
+            final String url = format("https://www.strava.com/oauth/token?client_id=%s&client_secret=%s&code=%s&grant_type=%s",
+                    stravaClientId, stravaClientSecret, id, STRAVA_GRANT_TYPE);
+            final HttpPost post = new HttpPost(url);
+            final HttpEntity entity = client.execute(post).getEntity();
+            final String responseBody = EntityUtils.toString(entity);
             LOG.debug("Authenticating user {}", id);
             LOG.debug("Response was {}", responseBody);
             return gson.fromJson(responseBody, Authorization.class);

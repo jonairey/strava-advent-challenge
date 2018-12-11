@@ -69,7 +69,7 @@ public class DoAllController {
         for (final String access : auths) {
             final Athlete athlete = athleteService.get(access);
             final List<Activity> activities = activityService.getRunningActivities(access, ACTIVITY_TYPE);
-            final List<String> activitiesString = plotActivities(activities);
+            final List<Double> activitiesString = plotActivities(activities);
             lines.add(buildLine(athlete, activitiesString));
         }
 
@@ -91,10 +91,10 @@ public class DoAllController {
         return header.toString();
     }
 
-    private List<String> plotActivities(final List<Activity> activities) {
+    private List<Double> plotActivities(final List<Activity> activities) {
         final SimpleDateFormat format = new SimpleDateFormat(DATE_FORMAT);
-        Map<Integer, Double> dates = new HashMap<>();
-        final List<String> activitiesString = new ArrayList<>();
+        Map<Integer, Double> dates = generateDateMap();
+        final List<Double> activitiesDouble = new ArrayList<>();
 
         for (final Activity activity : activities) {
             if (isActivityValid(activity)) {
@@ -110,21 +110,27 @@ public class DoAllController {
         }
 
         IntStream.rangeClosed(1, 31).forEach(i -> {
-                    final Double distance = dates.get(i);
-
-                    if (distance == null) {
-                        activitiesString.add("0");
-                    } else {
-                        activitiesString.add("" + distance);
-                    }
+                    final Double distance = new BigDecimal(dates.get(i) / MILE_IN_METRES)
+                            .setScale(2, ROUND_DOWN).doubleValue();
+                        activitiesDouble.add(distance);
                 }
         );
 
-        return activitiesString;
+        return activitiesDouble;
+    }
+
+    private Map<Integer, Double> generateDateMap() {
+        final Map<Integer, Double> map = new HashMap<>();
+
+        for (int i = 1; i <= 31; i++) {
+            map.put(i, 0.0);
+        }
+
+        return map;
     }
 
     private boolean isActivityValid(final Activity activity) {
-        return activity.getDistance() >= MILE_IN_METRES && activity.getType().equals("Run");
+        return activity.getType().equals("Run");
     }
 
     private void addActivityToMap(Map<Integer, Double> dates, Integer date, Activity activity) {
@@ -137,10 +143,10 @@ public class DoAllController {
             distance = activity.getDistance();
         }
 
-        dates.put(date, new BigDecimal(distance / MILE_IN_METRES).setScale(2, ROUND_DOWN).doubleValue());
+        dates.put(date, distance);
     }
 
-    private String buildLine(final Athlete athlete, final List<String> activitiesStrings) {
+    private String buildLine(final Athlete athlete, final List<Double> activitiesStrings) {
         final StringBuilder builder = new StringBuilder();
         builder.append(format("'%s','%s','%s',", athlete.getFirstname(), athlete.getLastname(), athlete.getSex()));
 

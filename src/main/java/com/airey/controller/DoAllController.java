@@ -86,7 +86,7 @@ public class DoAllController {
 
     private String buildHeader() {
         final StringBuilder header = new StringBuilder();
-        header.append("'First Name','Last Name','Sex',");
+        header.append("'First Name','Last Name','Gender',");
         IntStream.rangeClosed(1, 31).forEach(i -> header.append(format("'%s',", i)));
         return header.toString();
     }

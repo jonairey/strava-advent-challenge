@@ -13,19 +13,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static java.lang.String.format;
+import static java.math.BigDecimal.ROUND_DOWN;
 
 @RestController
 @RequestMapping("/go")
@@ -48,23 +45,22 @@ public class DoAllController {
     private static final String NEWLINE = "\n";
     private static final Logger LOG = LoggerFactory.getLogger(DoAllController.class);
 
-
     @RequestMapping
     public String go() {
-        LOG.info("Athletes are {}", authCodes);
+        LOG.debug("Athletes are {}", authCodes);
 
         //Get Authentications
         final List<String> auths = new ArrayList<>();
 
-        for (final String athlete : authCodes) {
-            final Authorization auth = authenticationService.authenticate(athlete);
+        for (final String authCode : authCodes) {
+            final Authorization auth = authenticationService.authenticate(authCode.split(":")[1]);
 
             if (auth != null && auth.getAccessToken() != null) {
                 auths.add(auth.getAccessToken());
             }
         }
 
-        LOG.info("Auths are {}", auths);
+        LOG.debug("Auths are {}", auths);
 
         //Get Activities
         final List<String> lines = new ArrayList<>();
@@ -105,7 +101,7 @@ public class DoAllController {
                 try {
                     final Date date = format.parse(activity.getStartDate());
                     final LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    LOG.info("Day of month is {}", localDate.getDayOfMonth());
+                    LOG.debug("Day of month is {}", localDate.getDayOfMonth());
                     addActivityToMap(dates, localDate.getDayOfMonth(), activity);
                 } catch (ParseException e) {
                     LOG.error("Unreadable date {}", activity.getStartDate(), e);
@@ -128,7 +124,7 @@ public class DoAllController {
     }
 
     private boolean isActivityValid(final Activity activity) {
-        return activity.getDistance() > MILE_IN_METRES && activity.getType().equals("Run");
+        return activity.getDistance() >= MILE_IN_METRES && activity.getType().equals("Run");
     }
 
     private void addActivityToMap(Map<Integer, Double> dates, Integer date, Activity activity) {
@@ -141,7 +137,7 @@ public class DoAllController {
             distance = activity.getDistance();
         }
 
-        dates.put(date, distance);
+        dates.put(date, new BigDecimal(distance / MILE_IN_METRES).setScale(2, ROUND_DOWN).doubleValue());
     }
 
     private String buildLine(final Athlete athlete, final List<String> activitiesStrings) {

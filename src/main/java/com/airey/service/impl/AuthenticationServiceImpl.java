@@ -34,8 +34,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     format("https://www.strava.com/oauth/token?client_id=%s&client_secret=%s&code=%s&grant_type=%s",
                             stravaClientId, stravaClientSecret, id, STRAVA_GRANT_TYPE));
             final String responseBody = EntityUtils.toString(client.execute(post).getEntity());
-            LOG.info("Authenticating user {}", id);
-            LOG.info("Response was {}", responseBody);
+            LOG.debug("Authenticating user {}", id);
+            LOG.debug("Response was {}", responseBody);
             return gson.fromJson(responseBody, Authorization.class);
         } catch (Throwable e) {
             LOG.error(e.getMessage(), e);

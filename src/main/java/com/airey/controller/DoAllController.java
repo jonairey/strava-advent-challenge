@@ -53,7 +53,7 @@ public class DoAllController {
         final List<String> auths = new ArrayList<>();
 
         for (final String authCode : authCodes) {
-            final Authorization auth = authenticationService.authenticate(authCode.split(":")[1]);
+            final Authorization auth = authenticationService.authenticate(authCode.split(":")[0]);
 
             if (auth != null && auth.getAccessToken() != null) {
                 auths.add(auth.getAccessToken());

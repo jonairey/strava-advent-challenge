@@ -14,35 +14,41 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class ActivityServiceImpl implements ActivityService {
     private final Gson gson = new GsonBuilder().create();
-    private static final String URI_GET_ATHLETE_ACTIVITIES = "https://www.strava.com/api/v3/athlete/activities";
-    private static final String DATE_AFTER = "1543622400";
+    private static final String URI_GET_ATHLETE_ACTIVITIES = "https://www.strava.com/api/v3/athlete/activities?per_page=200";
     private static final Logger LOG = LoggerFactory.getLogger(ActivityServiceImpl.class);
 
     @Override
-    public List<Activity> getActivities(final String athleteId) {
-        return getActivitiesInternal(athleteId);
+    public List<Activity> getActivities(final String athleteId, final String dateAfter) {
+        final List<Activity> activities = new ArrayList<>();
+        activities.addAll(getActivitiesInternal(athleteId, "1", dateAfter)); //TODO page all
+        return activities;
     }
 
     @Override
-    public List<Activity> getRunningActivities(final String athleteId, final String activityType) {
-        return getActivitiesInternal(athleteId).stream()
+    public List<Activity> getRunningActivities(final String athleteId, final String activityType, final String dateAfter) {
+        final List<Activity> activities = new ArrayList<>();
+        activities.addAll(getActivitiesInternal(athleteId, "1", dateAfter)); //TODO page all
+        return activities.stream()
                 .filter(activity -> activity.getType().equalsIgnoreCase(activityType))
                 .collect(Collectors.toList());
     }
 
-    private List<Activity> getActivitiesInternal(final String athleteId) {
+    private List<Activity> getActivitiesInternal(final String athleteId, final String page, final String dateAfter) {
         try (final CloseableHttpClient client = HttpClients.custom().build()) {
-            final HttpGet get = new HttpGet(URI_GET_ATHLETE_ACTIVITIES + "?after=" + DATE_AFTER);
+            final String url = URI_GET_ATHLETE_ACTIVITIES + "&page=" + page + "&after=" + dateAfter;
+            LOG.debug("Calling URL {}", url);
+            final HttpGet get = new HttpGet(url);
             get.addHeader("Authorization", "Bearer " + athleteId);
             final String responseBody = EntityUtils.toString(client.execute(get).getEntity());
-            Type listType = new TypeToken<List<Activity>>() {
-            }.getType();
+            LOG.debug("Response was {}", responseBody);
+            Type listType = new TypeToken<List<Activity>>() {}.getType();
             return gson.fromJson(responseBody, listType);
         } catch (Throwable e) {
             LOG.error(e.getMessage(), e);

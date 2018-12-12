@@ -24,9 +24,10 @@ public class AthleteServiceImpl implements AthleteService {
             final HttpGet get = new HttpGet(URI_GET_ATHLETE);
             get.addHeader("Authorization", "Bearer " + id);
             final String responseBody = EntityUtils.toString(client.execute(get).getEntity());
+            LOG.debug("Response was {}", responseBody);
             return gson.fromJson(responseBody, Athlete.class);
         } catch (Throwable e) {
-            LOG.error(e.getMessage(), e);
+            LOG.error(e.getMessage());
         }
 
         return null;

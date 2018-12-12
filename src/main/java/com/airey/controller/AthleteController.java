@@ -7,6 +7,7 @@ import com.airey.service.AthleteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -26,12 +27,12 @@ public class AthleteController {
     }
 
     @RequestMapping("/{id}/activities")
-    public List<Activity> retrieveAthleteActivities(@PathVariable String id) {
-        return activityService.getActivities(id);
+    public List<Activity> retrieveAthleteActivities(@PathVariable String id, @RequestParam String dateAfter) {
+        return activityService.getActivities(id, dateAfter);
     }
 
     @RequestMapping("/{id}/activities/{type}")
-    public List<Activity> retrieveAthleteRunningActivities(@PathVariable String id, @PathVariable String type) {
-        return activityService.getRunningActivities(id, type);
+    public List<Activity> retrieveAthleteRunningActivities(@PathVariable String id, @PathVariable String type, @RequestParam String dateAfter) {
+        return activityService.getRunningActivities(id, type, dateAfter);
     }
 }

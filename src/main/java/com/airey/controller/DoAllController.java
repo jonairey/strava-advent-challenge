@@ -19,12 +19,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -51,7 +46,8 @@ public class DoAllController {
     private static final String DATE_AFTER = "1543622400";
     private static final Double MILE_IN_METRES = 1609.34;
     private static final String ACTIVITY_TYPE = "run";
-    private static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    private static final String DATE_FORMAT_STRING = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING);
     private static final String NEWLINE = "\n";
     private static final Logger LOG = LoggerFactory.getLogger(DoAllController.class);
 
@@ -77,6 +73,7 @@ public class DoAllController {
             builder.append(NEWLINE);
         }
 
+        LOG.debug("Completed Do All Go.");
         return builder.toString();
     }
 
@@ -118,20 +115,21 @@ public class DoAllController {
             final Athlete athlete = athleteService.get(accessToken);
             final List<Activity> activities = activityService.getRunningActivities(accessToken, ACTIVITY_TYPE, DATE_AFTER);
             final List<Double> activitiesDouble = plotActivities(activities);
-            final Double distanceSum = activitiesDouble.stream().mapToDouble(Double::doubleValue).sum();
+            Double distanceSum = activitiesDouble.stream().mapToDouble(Double::doubleValue).sum();
+            distanceSum = new BigDecimal(distanceSum).setScale(2, ROUND_DOWN).doubleValue();
             return buildLine(athlete, activitiesDouble) + "'" + distanceSum + "'";
         });
     }
 
     private List<Double> plotActivities(final List<Activity> activities) {
-        final SimpleDateFormat format = new SimpleDateFormat(DATE_FORMAT);
         Map<Integer, Double> dates = generateDateMap();
         final List<Double> activitiesDouble = new ArrayList<>();
 
         for (final Activity activity : activities) {
             if (isActivityValid(activity)) {
                 try {
-                    final Date date = format.parse(activity.getStartDate());
+                    LOG.debug("Activity Start Date is {}", activity.getStartDate());
+                    final Date date = DATE_FORMAT.parse(activity.getStartDate());
                     final LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                     addActivityToMap(dates, localDate.getDayOfMonth(), activity);
                 } catch (ParseException e) {

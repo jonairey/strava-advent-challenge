@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -117,7 +118,7 @@ public class DoAllController {
             final List<Double> activitiesDouble = plotActivities(activities);
             Double distanceSum = activitiesDouble.stream().mapToDouble(Double::doubleValue).sum();
             distanceSum = new BigDecimal(distanceSum).setScale(2, ROUND_DOWN).doubleValue();
-            return buildLine(athlete, activitiesDouble) + "'" + distanceSum + "'";
+            return buildLine(athlete, activitiesDouble) + "'" + convertToMiles(distanceSum) + "'";
         });
     }
 
@@ -138,13 +139,7 @@ public class DoAllController {
             }
         }
 
-        IntStream.rangeClosed(1, LAST_DAY).forEach(i -> {
-                    final Double distance = new BigDecimal(dates.get(i) / MILE_IN_METRES)
-                            .setScale(2, ROUND_DOWN).doubleValue();
-                    activitiesDouble.add(distance);
-                }
-        );
-
+        IntStream.rangeClosed(1, LAST_DAY).forEach(i -> activitiesDouble.add(dates.get(i)));
         return activitiesDouble;
     }
 
@@ -180,9 +175,19 @@ public class DoAllController {
         builder.append(format("'%s','%s','%s',", athlete.getFirstname(), athlete.getLastname(), athlete.getSex()));
 
         for (int i = 0; i < LAST_DAY; i++) {
-            builder.append(format("'%s',", activitiesStrings.get(i)));
+            builder.append(format("'%s',", convertToMiles(activitiesStrings.get(i))));
         }
 
         return builder.toString();
+    }
+
+    private String convertToMiles(final Double distanceMetres) {
+        LOG.debug("Distance in metres is {}", distanceMetres);
+        final BigDecimal distanceMilesBigDecimal = new BigDecimal(distanceMetres / MILE_IN_METRES)
+                .setScale(2, ROUND_DOWN);
+        final String distanceMilesString = new DecimalFormat("0.00")
+                .format(distanceMilesBigDecimal);
+        LOG.debug("Distance in miles is {}", distanceMilesString);
+        return distanceMilesString;
     }
 }

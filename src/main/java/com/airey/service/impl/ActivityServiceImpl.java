@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,12 +49,13 @@ public class ActivityServiceImpl implements ActivityService {
             get.addHeader("Authorization", "Bearer " + athleteId);
             final String responseBody = EntityUtils.toString(client.execute(get).getEntity());
             LOG.debug("Response was {}", responseBody);
-            Type listType = new TypeToken<List<Activity>>() {}.getType();
+            Type listType = new TypeToken<List<Activity>>() {
+            }.getType();
             return gson.fromJson(responseBody, listType);
         } catch (Throwable e) {
             LOG.error(e.getMessage(), e);
         }
 
-        return null;
+        return Collections.EMPTY_LIST;
     }
 }

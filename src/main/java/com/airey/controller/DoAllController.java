@@ -6,6 +6,8 @@ import com.airey.domain.authorization.Authorization;
 import com.airey.service.ActivityService;
 import com.airey.service.AthleteService;
 import com.airey.service.AuthenticationService;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,12 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -43,6 +50,7 @@ public class DoAllController {
     @Value("${auth.codes}")
     private String[] authCodes;
 
+    private final Gson gson = new GsonBuilder().create();
     private static final Integer LAST_DAY = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfMonth();
     private static final String DATE_AFTER = "1543622400";
     private static final Double MILE_IN_METRES = 1609.34;
@@ -75,6 +83,8 @@ public class DoAllController {
         }
 
         LOG.debug("Completed Do All Go.");
+        LOG.debug("--------------------");
+        LOG.debug(builder.toString());
         return builder.toString();
     }
 
@@ -129,10 +139,15 @@ public class DoAllController {
         for (final Activity activity : activities) {
             if (isActivityValid(activity)) {
                 try {
-                    LOG.debug("Activity Start Date is {}", activity.getStartDate());
-                    final Date date = DATE_FORMAT.parse(activity.getStartDate());
-                    final LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                    addActivityToMap(dates, localDate.getDayOfMonth(), activity);
+                    LOG.debug("Activity is {}", gson.toJson(activity));
+
+                    try {
+                        final Date date = DATE_FORMAT.parse(activity.getStartDate());
+                        final LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                        addActivityToMap(dates, localDate.getDayOfMonth(), activity);
+                    } catch (NumberFormatException e) {
+                        LOG.error("Failed to parse date", e);
+                    }
                 } catch (ParseException e) {
                     LOG.error("Unreadable date {}", activity.getStartDate(), e);
                 }

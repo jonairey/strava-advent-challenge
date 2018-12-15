@@ -83,13 +83,41 @@ public class DoAllController {
         return builder.toString();
     }
 
-    private List<String> getAuths(List<String> authCodes) {
+    @RequestMapping("/sort")
+    public String goSort() {
+        LOG.debug("Day of Month is {}", LAST_DAY);
+        LOG.debug("Athletes are {}", authCodes);
+
+        //Get Authentications
+        final List<String> auths = getAuths(authCodes);
+        LOG.debug("Auths are {}", auths);
+
+        //Get Activities
+        final List<String> lines = new ArrayList<>();
+        lines.add(buildHeader());
+        lines.addAll(getAthleteLinesSorted(auths));
+
+        //Print CSV
+        final StringBuilder builder = new StringBuilder();
+
+        for (String line : lines) {
+            builder.append(line.replaceAll("'", "\""));
+            builder.append(NEWLINE);
+        }
+
+        LOG.debug("Completed Do All Go Sort.");
+        LOG.debug("--------------------");
+        LOG.debug(builder.toString());
+        return builder.toString();
+    }
+
+    private List<String> getAuths(final List<String> authCodes) {
         final List<CompletableFuture<String>> futures =
                 authCodes.stream().map(authCode -> getAuthsAsync(authCode)).collect(Collectors.toList());
         return futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
     }
 
-    private CompletableFuture<String> getAuthsAsync(String authCode) {
+    private CompletableFuture<String> getAuthsAsync(final String authCode) {
         return CompletableFuture.supplyAsync(() -> {
             final Authorization auth = authenticationService.authenticate(authCode.split(":")[0]);
             LOG.debug("Auth is {}", auth);
@@ -97,6 +125,7 @@ public class DoAllController {
             if (auth != null && auth.getAccessToken() != null) {
                 return auth.getAccessToken();
             } else {
+                LOG.error("Auth {} is null", authCode);
                 return null;
             }
         });
@@ -116,7 +145,23 @@ public class DoAllController {
         return futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
     }
 
-    private CompletableFuture<String> getAthleteLinesAsync(String accessToken) {
+    private Collection<String> getAthleteLinesSorted(final List<String> auths) {
+        final List<CompletableFuture<String>> futures =
+                auths.stream().map(accessToken -> getAthleteLinesAsync(accessToken)).collect(Collectors.toList());
+        final List<String> unsortedList = futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
+        final SortedMap<Double, String> activitiesMap = new TreeMap<Double, String>(Collections.reverseOrder()) {
+        };
+
+        for (final String activityLine : unsortedList) {
+            final Double distance = Double.valueOf(activityLine.substring(activityLine.lastIndexOf(",") + 1)
+                    .replaceAll("'", ""));
+            activitiesMap.put(distance, activityLine);
+        }
+
+        return activitiesMap.values();
+    }
+
+    private CompletableFuture<String> getAthleteLinesAsync(final String accessToken) {
         return CompletableFuture.supplyAsync(() -> {
             final Athlete athlete = athleteService.get(accessToken);
             final List<Activity> activities = activityService.getRunningActivities(accessToken, ACTIVITY_TYPE, DATE_AFTER);
@@ -128,7 +173,7 @@ public class DoAllController {
     }
 
     private List<Double> plotActivities(final List<Activity> activities) {
-        Map<Integer, Double> dates = generateDateMap();
+        final Map<Integer, Double> dates = generateDateMap();
         final List<Double> activitiesDouble = new ArrayList<>();
 
         for (final Activity activity : activities) {
@@ -141,10 +186,10 @@ public class DoAllController {
                         final LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                         addActivityToMap(dates, localDate.getDayOfMonth(), activity);
                     } catch (NumberFormatException e) {
-                        LOG.error("Failed to parse date", e);
+                        LOG.error("Failed to parse date for activity {}", activity, e);
                     }
                 } catch (ParseException e) {
-                    LOG.error("Unreadable date {}", activity.getStartDate(), e);
+                    LOG.error("Unreadable date for activity {}", activity, e);
                 }
             }
         }
@@ -167,7 +212,7 @@ public class DoAllController {
         return activity.getType().equals("Run");
     }
 
-    private void addActivityToMap(Map<Integer, Double> dates, Integer date, Activity activity) {
+    private void addActivityToMap(final Map<Integer, Double> dates, final Integer date, final Activity activity) {
         Double distance;
 
         if (dates.containsKey(date)) {

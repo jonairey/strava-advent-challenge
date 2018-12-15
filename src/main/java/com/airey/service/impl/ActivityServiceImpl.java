@@ -56,6 +56,6 @@ public class ActivityServiceImpl implements ActivityService {
             LOG.error(e.getMessage(), e);
         }
 
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 }

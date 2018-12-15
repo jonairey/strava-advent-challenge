@@ -22,18 +22,13 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.String.format;
-import static java.math.BigDecimal.ROUND_DOWN;
+import static java.math.RoundingMode.DOWN;
 
 @RestController
 @RequestMapping("/go")
@@ -47,8 +42,8 @@ public class DoAllController {
     @Autowired
     private ActivityService activityService;
 
-    @Value("${auth.codes}")
-    private String[] authCodes;
+    @Value("#{'${auth.codes}'.split(',')}")
+    private List<String> authCodes;
 
     private final Gson gson = new GsonBuilder().create();
     private static final Integer LAST_DAY = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfMonth();
@@ -88,9 +83,9 @@ public class DoAllController {
         return builder.toString();
     }
 
-    private List<String> getAuths(final String[] authCodes) {
+    private List<String> getAuths(List<String> authCodes) {
         final List<CompletableFuture<String>> futures =
-                Arrays.stream(authCodes).map(authCode -> getAuthsAsync(authCode)).collect(Collectors.toList());
+                authCodes.stream().map(authCode -> getAuthsAsync(authCode)).collect(Collectors.toList());
         return futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
     }
 
@@ -127,7 +122,7 @@ public class DoAllController {
             final List<Activity> activities = activityService.getRunningActivities(accessToken, ACTIVITY_TYPE, DATE_AFTER);
             final List<Double> activitiesDouble = plotActivities(activities);
             Double distanceSum = activitiesDouble.stream().mapToDouble(Double::doubleValue).sum();
-            distanceSum = new BigDecimal(distanceSum).setScale(2, ROUND_DOWN).doubleValue();
+            distanceSum = new BigDecimal(distanceSum).setScale(2, DOWN).doubleValue();
             return buildLine(athlete, activitiesDouble) + "'" + convertToMiles(distanceSum) + "'";
         });
     }
@@ -198,10 +193,8 @@ public class DoAllController {
 
     private String convertToMiles(final Double distanceMetres) {
         LOG.debug("Distance in metres is {}", distanceMetres);
-        final BigDecimal distanceMilesBigDecimal = new BigDecimal(distanceMetres / MILE_IN_METRES)
-                .setScale(2, ROUND_DOWN);
-        final String distanceMilesString = new DecimalFormat("0.00")
-                .format(distanceMilesBigDecimal);
+        final BigDecimal distanceMilesBigDecimal = new BigDecimal(distanceMetres / MILE_IN_METRES).setScale(2, DOWN);
+        final String distanceMilesString = new DecimalFormat("0.00").format(distanceMilesBigDecimal);
         LOG.debug("Distance in miles is {}", distanceMilesString);
         return distanceMilesString;
     }

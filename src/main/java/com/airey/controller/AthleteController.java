@@ -22,17 +22,20 @@ public class AthleteController {
     private ActivityService activityService;
 
     @RequestMapping("/{id}")
-    public Athlete retrieveAthlete(@PathVariable String id) {
+    public Athlete retrieveAthlete(@PathVariable final String id) {
         return athleteService.get(id);
     }
 
     @RequestMapping("/{id}/activities")
-    public List<Activity> retrieveAthleteActivities(@PathVariable String id, @RequestParam String dateAfter) {
+    public List<Activity> retrieveAthleteActivities(@PathVariable final String id,
+                                                    @RequestParam(required = false) final String dateAfter) {
         return activityService.getActivities(id, dateAfter);
     }
 
     @RequestMapping("/{id}/activities/{type}")
-    public List<Activity> retrieveAthleteRunningActivities(@PathVariable String id, @PathVariable String type, @RequestParam String dateAfter) {
+    public List<Activity> retrieveAthleteRunningActivities(@PathVariable final String id,
+                                                           @PathVariable final String type,
+                                                           @RequestParam(required = false) final String dateAfter) {
         return activityService.getRunningActivities(id, type, dateAfter);
     }
 }

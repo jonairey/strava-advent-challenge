@@ -19,6 +19,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.lang.StringUtils.isEmpty;
+
 @Service
 public class ActivityServiceImpl implements ActivityService {
     private final Gson gson = new GsonBuilder().create();
@@ -28,22 +31,36 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public List<Activity> getActivities(final String athleteId, final String dateAfter) {
         final List<Activity> activities = new ArrayList<>();
-        activities.addAll(getActivitiesInternal(athleteId, "1", dateAfter)); //TODO page all
+        List<Activity> activitiesPage;
+        int page = 1;
+
+        do {
+            activitiesPage = getActivitiesInternal(athleteId, page++, dateAfter);
+            activities.addAll(activitiesPage);
+        } while (isNotEmpty(activitiesPage));
+
         return activities;
     }
 
     @Override
     public List<Activity> getRunningActivities(final String athleteId, final String activityType, final String dateAfter) {
         final List<Activity> activities = new ArrayList<>();
-        activities.addAll(getActivitiesInternal(athleteId, "1", dateAfter)); //TODO page all
+        List<Activity> activitiesPage;
+        int page = 1;
+
+        do {
+            activitiesPage = getActivitiesInternal(athleteId, page++, dateAfter);
+            activities.addAll(activitiesPage);
+        } while (isNotEmpty(activitiesPage));
+
         return activities.stream()
                 .filter(activity -> activity.getType().equalsIgnoreCase(activityType))
                 .collect(Collectors.toList());
     }
 
-    private List<Activity> getActivitiesInternal(final String athleteId, final String page, final String dateAfter) {
+    private List<Activity> getActivitiesInternal(final String athleteId, final int page, final String dateAfter) {
         try (final CloseableHttpClient client = HttpClients.custom().build()) {
-            final String url = URI_GET_ATHLETE_ACTIVITIES + "&page=" + page + "&after=" + dateAfter;
+            final String url = URI_GET_ATHLETE_ACTIVITIES + "&page=" + page + (isEmpty(dateAfter) ? "" : "&after=" + dateAfter);
             LOG.debug("Calling URL {}", url);
             final HttpGet get = new HttpGet(url);
             get.addHeader("Authorization", "Bearer " + athleteId);

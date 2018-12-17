@@ -20,6 +20,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <apache.commons.version>2.6</apache.commons.version>
+        <apache.commons.collections.version>4.2</apache.commons.collections.version>
         <apache.http.version>4.5.6</apache.http.version>
     </properties>
 
@@ -36,6 +37,11 @@
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>${apache.commons.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+            <version>${apache.commons.collections.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

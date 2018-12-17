@@ -52,6 +52,7 @@ public class DoAllController {
     private static final String ACTIVITY_TYPE = "run";
     private static final String DATE_FORMAT_STRING = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING);
+    private static final String SEPERATOR = "\t";
     private static final String NEWLINE = "\n";
     private static final Logger LOG = LoggerFactory.getLogger(DoAllController.class);
 
@@ -72,8 +73,8 @@ public class DoAllController {
         //Print CSV
         final StringBuilder builder = new StringBuilder();
 
-        for (String line : lines) {
-            builder.append(line.replaceAll("'", "\""));
+        for (final String line : lines) {
+            builder.append(line);
             builder.append(NEWLINE);
         }
 
@@ -100,8 +101,8 @@ public class DoAllController {
         //Print CSV
         final StringBuilder builder = new StringBuilder();
 
-        for (String line : lines) {
-            builder.append(line.replaceAll("'", "\""));
+        for (final String line : lines) {
+            builder.append(line);
             builder.append(NEWLINE);
         }
 
@@ -133,9 +134,9 @@ public class DoAllController {
 
     private String buildHeader() {
         final StringBuilder header = new StringBuilder();
-        header.append("'First Name','Last Name','Gender',");
-        IntStream.rangeClosed(1, LAST_DAY).forEach(i -> header.append(format("'%s',", i)));
-        header.append("'Total'");
+        header.append(format("First Name%sLast Name%sGender%s", SEPERATOR, SEPERATOR, SEPERATOR));
+        IntStream.rangeClosed(1, LAST_DAY).forEach(i -> header.append(format("%s%s", i, SEPERATOR)));
+        header.append("Total");
         return header.toString();
     }
 
@@ -153,8 +154,7 @@ public class DoAllController {
         };
 
         for (final String activityLine : unsortedList) {
-            final Double distance = Double.valueOf(activityLine.substring(activityLine.lastIndexOf(",") + 1)
-                    .replaceAll("'", ""));
+            final Double distance = Double.valueOf(activityLine.substring(activityLine.lastIndexOf(SEPERATOR) + 1));
             activitiesMap.put(distance, activityLine);
         }
 
@@ -168,7 +168,7 @@ public class DoAllController {
             final List<Double> activitiesDouble = plotActivities(activities);
             Double distanceSum = activitiesDouble.stream().mapToDouble(Double::doubleValue).sum();
             distanceSum = new BigDecimal(distanceSum).setScale(2, DOWN).doubleValue();
-            return buildLine(athlete, activitiesDouble) + "'" + convertToMiles(distanceSum) + "'";
+            return buildLine(athlete, activitiesDouble) + convertToMiles(distanceSum);
         });
     }
 
@@ -227,10 +227,13 @@ public class DoAllController {
 
     private String buildLine(final Athlete athlete, final List<Double> activitiesStrings) {
         final StringBuilder builder = new StringBuilder();
-        builder.append(format("'%s','%s','%s',", athlete.getFirstname(), athlete.getLastname(), athlete.getSex()));
+        builder.append(format("%s%s%s%s%s%s",
+                athlete.getFirstname(), SEPERATOR,
+                athlete.getLastname(), SEPERATOR,
+                athlete.getSex(), SEPERATOR));
 
         for (int i = 0; i < LAST_DAY; i++) {
-            builder.append(format("'%s',", convertToMiles(activitiesStrings.get(i))));
+            builder.append(format("%s%s", convertToMiles(activitiesStrings.get(i)), SEPERATOR));
         }
 
         return builder.toString();

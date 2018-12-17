@@ -46,7 +46,7 @@ public class DoAllController {
     private List<String> authCodes;
 
     private final Gson gson = new GsonBuilder().create();
-    private static final Integer LAST_DAY = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfMonth();
+    private static final Integer DAY_OF_MONTH = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfMonth();
     private static final String DATE_AFTER = "1543622400";
     private static final Double MILE_IN_METRES = 1609.34;
     private static final String ACTIVITY_TYPE = "run";
@@ -58,7 +58,7 @@ public class DoAllController {
 
     @RequestMapping
     public String go() {
-        LOG.debug("Day of Month is {}", LAST_DAY);
+        LOG.debug("Day of Month is {}", DAY_OF_MONTH);
         LOG.debug("Athletes are {}", authCodes);
 
         //Get Authentications
@@ -86,7 +86,7 @@ public class DoAllController {
 
     @RequestMapping("/sort")
     public String goSort() {
-        LOG.debug("Day of Month is {}", LAST_DAY);
+        LOG.debug("Day of Month is {}", DAY_OF_MONTH);
         LOG.debug("Athletes are {}", authCodes);
 
         //Get Authentications
@@ -135,8 +135,8 @@ public class DoAllController {
     private String buildHeader() {
         final StringBuilder header = new StringBuilder();
         header.append(format("First Name%sLast Name%sGender%s", SEPERATOR, SEPERATOR, SEPERATOR));
-        IntStream.rangeClosed(1, LAST_DAY).forEach(i -> header.append(format("%s%s", i, SEPERATOR)));
-        header.append("Total");
+        IntStream.rangeClosed(1, DAY_OF_MONTH).forEach(i -> header.append(format("%s%s", i, SEPERATOR)));
+        header.append("Avg" + SEPERATOR + "Total");
         return header.toString();
     }
 
@@ -166,9 +166,11 @@ public class DoAllController {
             final Athlete athlete = athleteService.get(accessToken);
             final List<Activity> activities = activityService.getRunningActivities(accessToken, ACTIVITY_TYPE, DATE_AFTER);
             final List<Double> activitiesDouble = plotActivities(activities);
-            Double distanceSum = activitiesDouble.stream().mapToDouble(Double::doubleValue).sum();
-            distanceSum = new BigDecimal(distanceSum).setScale(2, DOWN).doubleValue();
-            return buildLine(athlete, activitiesDouble) + convertToMiles(distanceSum);
+            Double totalDistance = activitiesDouble.stream().mapToDouble(Double::doubleValue).sum();
+            totalDistance = new BigDecimal(totalDistance).setScale(2, DOWN).doubleValue();
+            return buildLine(athlete, activitiesDouble) +
+                    convertToMiles(totalDistance / DAY_OF_MONTH) + SEPERATOR +
+                    convertToMiles(totalDistance);
         });
     }
 
@@ -194,14 +196,14 @@ public class DoAllController {
             }
         }
 
-        IntStream.rangeClosed(1, LAST_DAY).forEach(i -> activitiesDouble.add(dates.get(i)));
+        IntStream.rangeClosed(1, DAY_OF_MONTH).forEach(i -> activitiesDouble.add(dates.get(i)));
         return activitiesDouble;
     }
 
     private Map<Integer, Double> generateDateMap() {
         final Map<Integer, Double> map = new HashMap<>();
 
-        for (int i = 1; i <= LAST_DAY; i++) {
+        for (int i = 1; i <= DAY_OF_MONTH; i++) {
             map.put(i, 0.0);
         }
 
@@ -232,7 +234,7 @@ public class DoAllController {
                 athlete.getLastname(), SEPERATOR,
                 athlete.getSex(), SEPERATOR));
 
-        for (int i = 0; i < LAST_DAY; i++) {
+        for (int i = 0; i < DAY_OF_MONTH; i++) {
             builder.append(format("%s%s", convertToMiles(activitiesStrings.get(i)), SEPERATOR));
         }
 

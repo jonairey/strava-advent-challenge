@@ -29,13 +29,13 @@ public class ActivityServiceImpl implements ActivityService {
     private static final Logger LOG = LoggerFactory.getLogger(ActivityServiceImpl.class);
 
     @Override
-    public List<Activity> getActivities(final String athleteId, final String dateAfter) {
+    public List<Activity> getActivities(final String athleteId, final String dateAfter, String dateBefore) {
         final List<Activity> activities = new ArrayList<>();
         List<Activity> activitiesPage;
         int page = 1;
 
         do {
-            activitiesPage = getActivitiesInternal(athleteId, page++, dateAfter);
+            activitiesPage = getActivitiesInternal(athleteId, page++, dateAfter, dateBefore);
             activities.addAll(activitiesPage);
         } while (isNotEmpty(activitiesPage));
 
@@ -43,13 +43,14 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public List<Activity> getRunningActivities(final String athleteId, final String activityType, final String dateAfter) {
+    public List<Activity> getRunningActivities(final String athleteId, final String activityType,
+                                               final String dateAfter, final String dateBefore) {
         final List<Activity> activities = new ArrayList<>();
         List<Activity> activitiesPage;
         int page = 1;
 
         do {
-            activitiesPage = getActivitiesInternal(athleteId, page++, dateAfter);
+            activitiesPage = getActivitiesInternal(athleteId, page++, dateAfter, dateBefore);
             activities.addAll(activitiesPage);
         } while (isNotEmpty(activitiesPage));
 
@@ -58,9 +59,11 @@ public class ActivityServiceImpl implements ActivityService {
                 .collect(Collectors.toList());
     }
 
-    private List<Activity> getActivitiesInternal(final String athleteId, final int page, final String dateAfter) {
+    private List<Activity> getActivitiesInternal(final String athleteId, final int page, final String dateAfter, String dateBefore) {
         try (final CloseableHttpClient client = HttpClients.custom().build()) {
-            final String url = URI_GET_ATHLETE_ACTIVITIES + "&page=" + page + (isEmpty(dateAfter) ? "" : "&after=" + dateAfter);
+            final String url = URI_GET_ATHLETE_ACTIVITIES + "&page=" + page +
+                    (isEmpty(dateAfter) ? "" : "&after=" + dateAfter) +
+                    (isEmpty(dateAfter) ? "" : "&before=" + dateBefore);
             LOG.debug("Calling URL {}", url);
             final HttpGet get = new HttpGet(url);
             get.addHeader("Authorization", "Bearer " + athleteId);

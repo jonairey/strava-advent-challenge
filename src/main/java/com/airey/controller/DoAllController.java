@@ -46,8 +46,9 @@ public class DoAllController {
     private List<String> authCodes;
 
     private final Gson gson = new GsonBuilder().create();
-    private static final Integer DAY_OF_MONTH = Instant.now().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfMonth();
+    private static final Integer DAY_OF_MONTH = 31;
     private static final String DATE_AFTER = "1543622400";
+    private static final String DATE_BEFORE = "1546300800";
     private static final Double MILE_IN_METRES = 1609.34;
     private static final String ACTIVITY_TYPE = "run";
     private static final String DATE_FORMAT_STRING = "yyyy-MM-dd'T'HH:mm:ss'Z'";
@@ -164,7 +165,7 @@ public class DoAllController {
     private CompletableFuture<String> getAthleteLinesAsync(final String accessToken) {
         return CompletableFuture.supplyAsync(() -> {
             final Athlete athlete = athleteService.get(accessToken);
-            final List<Activity> activities = activityService.getRunningActivities(accessToken, ACTIVITY_TYPE, DATE_AFTER);
+            final List<Activity> activities = activityService.getRunningActivities(accessToken, ACTIVITY_TYPE, DATE_AFTER, DATE_BEFORE);
             final List<Double> activitiesDouble = plotActivities(activities);
             Double totalDistance = activitiesDouble.stream().mapToDouble(Double::doubleValue).sum();
             totalDistance = new BigDecimal(totalDistance).setScale(2, DOWN).doubleValue();

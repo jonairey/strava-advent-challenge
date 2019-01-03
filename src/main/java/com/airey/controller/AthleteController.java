@@ -28,14 +28,16 @@ public class AthleteController {
 
     @RequestMapping("/{id}/activities")
     public List<Activity> retrieveAthleteActivities(@PathVariable final String id,
-                                                    @RequestParam(required = false) final String dateAfter) {
-        return activityService.getActivities(id, dateAfter);
+                                                    @RequestParam(required = false) final String dateAfter,
+                                                    @RequestParam(required = false) final String dateBefore) {
+        return activityService.getActivities(id, dateAfter, dateBefore);
     }
 
     @RequestMapping("/{id}/activities/{type}")
     public List<Activity> retrieveAthleteRunningActivities(@PathVariable final String id,
                                                            @PathVariable final String type,
-                                                           @RequestParam(required = false) final String dateAfter) {
-        return activityService.getRunningActivities(id, type, dateAfter);
+                                                           @RequestParam(required = false) final String dateAfter,
+                                                           @RequestParam(required = false) final String dateBefore) {
+        return activityService.getRunningActivities(id, type, dateAfter, dateBefore);
     }
 }
